@@ -8,9 +8,11 @@ Set the `--log LOG` option to log into the file.
 
 Set the `-i INTERVAL` option to specify the interval.
 
+At the end (when catches SIGINT, SIGTERM, SIGHUP or SIGQUIT signal) mem2log prints peak (min and max) values.
+
 ## Usage
 
-Just run the script. Choose mode, interval and set path to the log file.
+Just run the script. 
 ```
 $ ./mem2log -h
 usage: mem2log [-h] [-i INTERVAL] [-l LOG] [-m MODE]
