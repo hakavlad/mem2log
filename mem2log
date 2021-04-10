@@ -1,0 +1,720 @@
+#!/usr/bin/env python3
+"""mem2log"""
+
+from argparse import ArgumentParser
+from ctypes import CDLL
+from signal import SIGHUP, SIGINT, SIGQUIT, SIGTERM, signal
+from sys import exit
+from time import sleep
+
+
+def log(msg):
+    """
+    """
+    print(msg)
+    if separate_log:
+        logging.info(msg)
+
+
+def mlockall():
+    """
+    """
+    MCL_CURRENT = 1
+    MCL_FUTURE = 2
+    MCL_ONFAULT = 4
+
+    libc = CDLL(None, use_errno=True)
+    result = libc.mlockall(MCL_CURRENT | MCL_FUTURE | MCL_ONFAULT)
+
+    if result != 0:
+        result = libc.mlockall(MCL_CURRENT | MCL_FUTURE)
+        if result != 0:
+            log('WARNING: cannot lock process memory: [Errno {}]'.format(
+                result))
+        else:
+            log('Process memory locked with MCL_CURRENT | MCL_FUTURE')
+    else:
+        log('Process memory locked with MCL_CURRENT | MCL_FUTURE | MCL_'
+            'ONFAULT')
+
+
+def check_meminfo1():
+    """
+    """
+    with open('/proc/meminfo', 'rb', buffering=0) as f:
+        x = f.read().decode().split(' kB\n')
+        mem_available = int(x[mem_available_index].split(':')[1])
+        mem_free = int(x[mem_free_index].split(':')[1])
+        active_anon = int(x[active_anon_index].split(':')[1])
+        inactive_anon = int(x[inactive_anon_index].split(':')[1])
+        active_file = int(x[active_file_index].split(':')[1])
+        inactive_file = int(x[inactive_file_index].split(':')[1])
+        swap_total = int(x[swap_total_index].split(':')[1])
+        swap_free = int(x[swap_free_index].split(':')[1])
+        dirty = int(x[dirty_index].split(':')[1])
+    return (
+        mem_available,
+        mem_free,
+        active_anon,
+        inactive_anon,
+        active_file,
+        inactive_file,
+        swap_total,
+        swap_free,
+        dirty)
+
+
+def check_meminfo2():
+    """
+    """
+    with open('/proc/meminfo', 'rb', buffering=0) as f:
+        x = f.read().decode().split(' kB\n')
+        mem_available = int(x[mem_available_index].split(':')[1])
+        mem_free = int(x[mem_free_index].split(':')[1])
+        buffers = int(x[buffers_index].split(':')[1])
+        cached = int(x[cached_index].split(':')[1])
+        active_anon = int(x[active_anon_index].split(':')[1])
+        inactive_anon = int(x[inactive_anon_index].split(':')[1])
+        active_file = int(x[active_file_index].split(':')[1])
+        inactive_file = int(x[inactive_file_index].split(':')[1])
+        swap_total = int(x[swap_total_index].split(':')[1])
+        swap_free = int(x[swap_free_index].split(':')[1])
+        dirty = int(x[dirty_index].split(':')[1])
+        writeback = int(x[writeback_index].split(':')[1])
+        shmem = int(x[shmem_index].split(':')[1])
+        sreclaimable = int(x[sreclaimable_index].split(':')[1])
+    return (
+        mem_available,
+        mem_free,
+        buffers,
+        cached,
+        active_anon,
+        inactive_anon,
+        active_file,
+        inactive_file,
+        swap_total,
+        swap_free,
+        dirty,
+        writeback,
+        shmem,
+        sreclaimable)
+
+
+def check_meminfo3():
+    """
+    """
+    with open('/proc/meminfo', 'rb', buffering=0) as f:
+        x = f.read().decode().split(' kB\n')
+        mem_available = int(x[mem_available_index].split(':')[1])
+        mem_free = int(x[mem_free_index].split(':')[1])
+        active_anon = int(x[active_anon_index].split(':')[1])
+        inactive_anon = int(x[inactive_anon_index].split(':')[1])
+        active_file = int(x[active_file_index].split(':')[1])
+        inactive_file = int(x[inactive_file_index].split(':')[1])
+        isolated_file = int(x[isolated_file_index].split(':')[1])
+        swap_total = int(x[swap_total_index].split(':')[1])
+        swap_free = int(x[swap_free_index].split(':')[1])
+        dirty = int(x[dirty_index].split(':')[1])
+        writeback = int(x[writeback_index].split(':')[1])
+    return (
+        mem_available,
+        mem_free,
+        active_anon,
+        inactive_anon,
+        active_file,
+        inactive_file,
+        isolated_file,
+        swap_total,
+        swap_free,
+        dirty,
+        writeback)
+
+
+def percent(num):
+    """Interprete num as percentage."""
+    return round(num * 100, 1)
+
+
+def signal_handler(signum, frame):
+    """
+    """
+    def signal_handler_inner(signum, frame):
+        pass
+
+    for i in sig_list:
+        signal(i, signal_handler_inner)
+
+    log('--')
+
+    log('Got the {} signal'.format(
+        sig_dict[signum]))
+
+    log('Peak values:')
+
+    log('  MA:  min {}, max {}'.format(
+        round(min_dict['MA'] / 1024, 2),
+        round(max_dict['MA'] / 1024, 2)))
+
+    log('  MF:  min {}, max {}'.format(
+        round(min_dict['MF'] / 1024, 2),
+        round(max_dict['MF'] / 1024, 2)))
+
+    if mode == '1':
+
+        log('  A:   min {}, max {}'.format(
+            round(min_dict['A'] / 1024, 2),
+            round(max_dict['A'] / 1024, 2)))
+
+        log('  F:   min {}, max {}'.format(
+            round(min_dict['F'] / 1024, 2),
+            round(max_dict['F'] / 1024, 2)))
+
+        log('  AF:  min {}, max {}'.format(
+            round(min_dict['AF'] / 1024, 2),
+            round(max_dict['AF'] / 1024, 2)))
+
+        log('  IF:  min {}, max {}'.format(
+            round(min_dict['IF'] / 1024, 2),
+            round(max_dict['IF'] / 1024, 2)))
+
+        log('  D:   min {}, max {}'.format(
+            round(min_dict['D'] / 1024, 2),
+            round(max_dict['D'] / 1024, 2)))
+
+        log('  C:   min {}, max {}'.format(
+            round(min_dict['C'] / 1024, 2),
+            round(max_dict['C'] / 1024, 2)))
+
+        log('  SF:  min {}, max {}'.format(
+            round(min_dict['SF'] / 1024, 2),
+            round(max_dict['SF'] / 1024, 2)))
+
+    if mode == '2':
+
+        log('  BU:  min {}, max {}'.format(
+            round(min_dict['BU'] / 1024, 2),
+            round(max_dict['BU'] / 1024, 2)))
+
+        log('  CA:  min {}, max {}'.format(
+            round(min_dict['CA'] / 1024, 2),
+            round(max_dict['CA'] / 1024, 2)))
+
+        log('  AA:  min {}, max {}'.format(
+            round(min_dict['AA'] / 1024, 2),
+            round(max_dict['AA'] / 1024, 2)))
+
+        log('  IA:  min {}, max {}'.format(
+            round(min_dict['IA'] / 1024, 2),
+            round(max_dict['IA'] / 1024, 2)))
+
+        log('  AF:  min {}, max {}'.format(
+            round(min_dict['AF'] / 1024, 2),
+            round(max_dict['AF'] / 1024, 2)))
+
+        log('  IF:  min {}, max {}'.format(
+            round(min_dict['IF'] / 1024, 2),
+            round(max_dict['IF'] / 1024, 2)))
+
+        log('  SF:  min {}, max {}'.format(
+            round(min_dict['SF'] / 1024, 2),
+            round(max_dict['SF'] / 1024, 2)))
+
+        log('  SU:  min {}, max {}'.format(
+            round(min_dict['SU'] / 1024, 2),
+            round(max_dict['SU'] / 1024, 2)))
+
+        log('  DI:  min {}, max {}'.format(
+            round(min_dict['DI'] / 1024, 2),
+            round(max_dict['DI'] / 1024, 2)))
+
+        log('  WR:  min {}, max {}'.format(
+            round(min_dict['WR'] / 1024, 2),
+            round(max_dict['WR'] / 1024, 2)))
+
+        log('  CF:  min {}, max {}'.format(
+            round(min_dict['CF'] / 1024, 2),
+            round(max_dict['CF'] / 1024, 2)))
+
+        log('  SH:  min {}, max {}'.format(
+            round(min_dict['SH'] / 1024, 2),
+            round(max_dict['SH'] / 1024, 2)))
+
+        log('  SR:  min {}, max {}'.format(
+            round(min_dict['SR'] / 1024, 2),
+            round(max_dict['SR'] / 1024, 2)))
+
+    if mode == '3':
+
+        log('  A:   min {}, max {}'.format(
+            round(min_dict['A'] / 1024, 2),
+            round(max_dict['A'] / 1024, 2)))
+
+        log('  AcF: min {}, max {}'.format(
+            round(min_dict['AcF'] / 1024, 2),
+            round(max_dict['AcF'] / 1024, 2)))
+
+        log('  InF: min {}, max {}'.format(
+            round(min_dict['InF'] / 1024, 2),
+            round(max_dict['InF'] / 1024, 2)))
+
+        log('  IsF: min {}, max {}'.format(
+            round(min_dict['IsF'] / 1024, 2),
+            round(max_dict['IsF'] / 1024, 2)))
+
+        log('  ReF: min {}, max {}'.format(
+            round(min_dict['ReF'] / 1024, 2),
+            round(max_dict['ReF'] / 1024, 2)))
+
+        log('  D:   min {}, max {}'.format(
+            round(min_dict['D'] / 1024, 2),
+            round(max_dict['D'] / 1024, 2)))
+
+        log('  W:   min {}, max {}'.format(
+            round(min_dict['W'] / 1024, 2),
+            round(max_dict['W'] / 1024, 2)))
+
+        log('  C:   min {}, max {}'.format(
+            round(min_dict['C'] / 1024, 2),
+            round(max_dict['C'] / 1024, 2)))
+
+        log('  SF:  min {}, max {}'.format(
+            round(min_dict['SF'] / 1024, 2),
+            round(max_dict['SF'] / 1024, 2)))
+
+    log('Exit.')
+
+    exit()
+
+
+parser = ArgumentParser()
+
+parser.add_argument(
+    '-i',
+    '--interval',
+    help="""interval in sec""",
+    default=2,
+    type=float
+)
+
+
+parser.add_argument(
+    '-l',
+    '--log',
+    help="""path to log file""",
+    default=None,
+    type=str
+)
+
+
+parser.add_argument(
+    '-m',
+    '--mode',
+    help="""mode (1, 2 or 3)""",
+    default='1',
+    type=str
+)
+
+
+args = parser.parse_args()
+interval = args.interval
+log_file = args.log
+mode = args.mode
+
+
+if not (mode == '1' or mode == '2' or mode == '3'):
+    print('error: invalid mode. Valid values are 1, 2 and 3')
+    exit(1)
+
+
+if log_file is None:
+    separate_log = False
+else:
+    separate_log = True
+    import logging
+
+if log_file is not None:
+    logstring = 'log file: {}, '.format(log_file)
+else:
+    logstring = 'log file is not set, '
+
+
+if separate_log:
+    try:
+        logging.basicConfig(
+            filename=log_file,
+            level=logging.INFO,
+            format="%(asctime)s: %(message)s")
+    except Exception as e:
+        print(e)
+        exit(1)
+
+
+if interval <= 0:
+    log('error: argument -i/--interval: the value must be greater than 0')
+    exit(1)
+
+
+with open('/proc/meminfo') as f:
+    mem_list = f.readlines()
+
+
+mem_list_names = []
+
+for s in mem_list:
+    mem_list_names.append(s.split(':')[0])
+
+
+mem_available_index = mem_list_names.index('MemAvailable')
+mem_free_index = mem_list_names.index('MemFree')
+buffers_index = mem_list_names.index('Buffers')
+cached_index = mem_list_names.index('Cached')
+active_anon_index = mem_list_names.index('Active(anon)')
+inactive_anon_index = mem_list_names.index('Inactive(anon)')
+active_file_index = mem_list_names.index('Active(file)')
+inactive_file_index = mem_list_names.index('Inactive(file)')
+swap_total_index = mem_list_names.index('SwapTotal')
+swap_free_index = mem_list_names.index('SwapFree')
+dirty_index = mem_list_names.index('Dirty')
+writeback_index = mem_list_names.index('Writeback')
+shmem_index = mem_list_names.index('Shmem')
+sreclaimable_index = mem_list_names.index('SReclaimable')
+mem_total = int(mem_list[0].split(':')[1][:-4])
+swap_total = int(mem_list[swap_total_index].split(':')[1][:-4])
+
+if mode == '3':
+    try:
+        isolated_file_index = mem_list_names.index('Isolated(file)')
+    except ValueError:
+        print('error: Isolated(file) not found in /proc/meminfo')
+        exit(1)
+
+sig_list = [SIGTERM, SIGINT, SIGQUIT, SIGHUP]
+
+sig_dict = {
+    SIGINT: 'SIGINT',
+    SIGQUIT: 'SIGQUIT',
+    SIGHUP: 'SIGHUP',
+    SIGTERM: 'SIGTERM'
+}
+
+for i in sig_list:
+    signal(i, signal_handler)
+
+
+log('Starting mem2log with interval {}s, mode: {}'.format(interval, mode))
+
+
+if separate_log:
+    log('Log file: {}'.format(log_file))
+
+
+mlockall()
+
+log('All values are in mebibytes')
+
+log('MemTotal: {}, SwapTotal: {}'.format(
+    round(mem_total / 1024, 1),
+    round(swap_total / 1024, 1)
+))
+
+log('--')
+
+
+min_dict = dict()
+max_dict = dict()
+
+
+if mode == '1':
+
+    log('MA is MemAvailable, MF is MemFree, A is Anon')
+    log('F is File, AF is Active(file), IF is Inactive(file)')
+    log('D is Dirty, C is Clean file (File - Dirty), SF is SwapFree')
+    log('--')
+
+    while True:
+
+        (mem_available, mem_free, active_anon, inactive_anon, active_file,
+         inactive_file, swap_total, swap_free, dirty) = check_meminfo1()
+
+        anon = active_anon + inactive_anon
+        total_file = active_file + inactive_file
+        clean = max(0, (total_file - dirty))
+
+        if ('MA' not in max_dict or mem_available > max_dict['MA']):
+            max_dict['MA'] = mem_available
+        if ('MA' not in min_dict or mem_available < min_dict['MA']):
+            min_dict['MA'] = mem_available
+
+        if ('MF' not in max_dict or mem_free > max_dict['MF']):
+            max_dict['MF'] = mem_free
+        if ('MF' not in min_dict or mem_free < min_dict['MF']):
+            min_dict['MF'] = mem_free
+
+        if ('A' not in max_dict or anon > max_dict['A']):
+            max_dict['A'] = anon
+        if ('A' not in min_dict or anon < min_dict['A']):
+            min_dict['A'] = anon
+
+        if ('F' not in max_dict or total_file > max_dict['F']):
+            max_dict['F'] = total_file
+        if ('F' not in min_dict or total_file < min_dict['F']):
+            min_dict['F'] = total_file
+
+        if ('AF' not in max_dict or active_file > max_dict['AF']):
+            max_dict['AF'] = active_file
+        if ('AF' not in min_dict or active_file < min_dict['AF']):
+            min_dict['AF'] = active_file
+
+        if ('IF' not in max_dict or inactive_file > max_dict['IF']):
+            max_dict['IF'] = inactive_file
+        if ('IF' not in min_dict or inactive_file < min_dict['IF']):
+            min_dict['IF'] = inactive_file
+
+        if ('SF' not in max_dict or swap_free > max_dict['SF']):
+            max_dict['SF'] = swap_free
+        if ('SF' not in min_dict or swap_free < min_dict['SF']):
+            min_dict['SF'] = swap_free
+
+        if ('D' not in max_dict or dirty > max_dict['D']):
+            max_dict['D'] = dirty
+        if ('D' not in min_dict or dirty < min_dict['D']):
+            min_dict['D'] = dirty
+
+        if ('C' not in max_dict or clean > max_dict['C']):
+            max_dict['C'] = clean
+        if ('C' not in min_dict or clean < min_dict['C']):
+            min_dict['C'] = clean
+
+        # MA=8807=90% MF=8854 A=192 F=156 AF=52 IF=105 D=0 C=156 SF=48582=99%
+
+        log('MA={}={}% MF={} A={} F={} AF={} IF={} D={} C={} SF={}={}%'.format(
+            round(mem_available / 1024),
+            round(mem_available / mem_total * 100),
+            round(mem_free / 1024),
+            round(anon / 1024),
+            round(total_file / 1024),
+            round(active_file / 1024),
+            round(inactive_file / 1024),
+            round(dirty / 1024),
+            round(clean / 1024),
+            round(swap_free / 1024),
+            round(swap_free / (swap_total + 1) * 100)
+        ))
+
+        sleep(interval)
+
+
+if mode == '2':
+
+    log('MA is MemAvailable, MF is MemFree, BU is Buffers, CA is Cached')
+    log('AA is Active(anon), IA is Inactive(anon), AF is Active(file), '
+        'IF is Inactive(file)')
+    log('SF is SwapFree, SU is `SwapTotal - SwapFree`, DI is Dirty, '
+        'WR is Writeback')
+    log('CF is Clean File (AF + IF - DI), SH is Shmem, SR is SReclaimable')
+    log('--')
+
+    while True:
+
+        (mem_available, mem_free, buffers, cached, active_anon, inactive_anon,
+         active_file, inactive_file, swap_total, swap_free, dirty, writeback,
+         shmem, sreclaimable) = check_meminfo2()
+
+        swap_used = swap_total - swap_free
+        clean_file = max(0, (active_file + inactive_file - dirty))
+
+        if ('MA' not in max_dict or mem_available > max_dict['MA']):
+            max_dict['MA'] = mem_available
+        if ('MA' not in min_dict or mem_available < min_dict['MA']):
+            min_dict['MA'] = mem_available
+
+        if ('MF' not in max_dict or mem_free > max_dict['MF']):
+            max_dict['MF'] = mem_free
+        if ('MF' not in min_dict or mem_free < min_dict['MF']):
+            min_dict['MF'] = mem_free
+
+        if ('BU' not in max_dict or buffers > max_dict['BU']):
+            max_dict['BU'] = buffers
+        if ('BU' not in min_dict or buffers < min_dict['BU']):
+            min_dict['BU'] = buffers
+
+        if ('CA' not in max_dict or cached > max_dict['CA']):
+            max_dict['CA'] = cached
+        if ('CA' not in min_dict or cached < min_dict['CA']):
+            min_dict['CA'] = cached
+
+        if ('AA' not in max_dict or active_anon > max_dict['AA']):
+            max_dict['AA'] = active_anon
+        if ('AA' not in min_dict or active_anon < min_dict['AA']):
+            min_dict['AA'] = active_anon
+
+        if ('IA' not in max_dict or inactive_anon > max_dict['IA']):
+            max_dict['IA'] = inactive_anon
+        if ('IA' not in min_dict or inactive_anon < min_dict['IA']):
+            min_dict['IA'] = inactive_anon
+
+        if ('AF' not in max_dict or active_file > max_dict['AF']):
+            max_dict['AF'] = active_file
+        if ('AF' not in min_dict or active_file < min_dict['AF']):
+            min_dict['AF'] = active_file
+
+        if ('IF' not in max_dict or inactive_file > max_dict['IF']):
+            max_dict['IF'] = inactive_file
+        if ('IF' not in min_dict or inactive_file < min_dict['IF']):
+            min_dict['IF'] = inactive_file
+
+        if ('SF' not in max_dict or swap_free > max_dict['SF']):
+            max_dict['SF'] = swap_free
+        if ('SF' not in min_dict or swap_free < min_dict['SF']):
+            min_dict['SF'] = swap_free
+
+        if ('SU' not in max_dict or swap_used > max_dict['SU']):
+            max_dict['SU'] = swap_used
+        if ('SU' not in min_dict or swap_used < min_dict['SU']):
+            min_dict['SU'] = swap_used
+
+        if ('DI' not in max_dict or dirty > max_dict['DI']):
+            max_dict['DI'] = dirty
+        if ('DI' not in min_dict or dirty < min_dict['DI']):
+            min_dict['DI'] = dirty
+
+        if ('WR' not in max_dict or writeback > max_dict['WR']):
+            max_dict['WR'] = writeback
+        if ('WR' not in min_dict or writeback < min_dict['WR']):
+            min_dict['WR'] = writeback
+
+        if ('CF' not in max_dict or clean_file > max_dict['CF']):
+            max_dict['CF'] = clean_file
+        if ('CF' not in min_dict or clean_file < min_dict['CF']):
+            min_dict['CF'] = clean_file
+
+        if ('SH' not in max_dict or shmem > max_dict['SH']):
+            max_dict['SH'] = shmem
+        if ('SH' not in min_dict or shmem < min_dict['SH']):
+            min_dict['SH'] = shmem
+
+        if ('SR' not in max_dict or sreclaimable > max_dict['SR']):
+            max_dict['SR'] = sreclaimable
+        if ('SR' not in min_dict or sreclaimable < min_dict['SR']):
+            min_dict['SR'] = sreclaimable
+
+        # MA=8806 MF=8853 BU=25 CA=229 AA=82 IA=112 AF=52 IF=106 SF=48584 \
+        #     SU=356 DI=0 WR=0 CF=158 SH=91 SR=36
+
+        log('MA={} MF={} BU={} CA={} AA={} IA={} AF={} IF={} SF={} '
+            'SU={} DI={} WR={} CF={} SH={} SR={}'.format(
+                round(mem_available / 1024),
+                round(mem_free / 1024),
+                round(buffers / 1024),
+                round(cached / 1024),
+                round(active_anon / 1024),
+                round(inactive_anon / 1024),
+                round(active_file / 1024),
+                round(inactive_file / 1024),
+                round(swap_free / 1024),
+                round(swap_used / 1024),
+                round(dirty / 1024),
+                round(writeback / 1024),
+                round(clean_file / 1024),
+                round(shmem / 1024),
+                round(sreclaimable / 1024)
+            ))
+
+        sleep(interval)
+
+
+if mode == '3':
+
+    log('MA is MemAvailable, MF is MemFree, A is AnonAcF is Active(file), '
+        'InF is Inactive(file)')
+    log('IsF is Isolated(file), ReF is Reclaimable(file) (AcF + InF + IsF)')
+    log('D is Dirty, W is Writeback, C is Clean file (ReF - D), '
+        'SF is SwapFree')
+    log('--')
+
+    while True:
+
+        (mem_available, mem_free, active_anon, inactive_anon, active_file,
+         inactive_file, isolated_file, swap_total, swap_free, dirty, writeback
+         ) = check_meminfo3()
+
+        anon = active_anon + inactive_anon
+        re_file = active_file + inactive_file + isolated_file
+        clean = re_file - dirty
+
+        if ('MA' not in max_dict or mem_available > max_dict['MA']):
+            max_dict['MA'] = mem_available
+        if ('MA' not in min_dict or mem_available < min_dict['MA']):
+            min_dict['MA'] = mem_available
+
+        if ('MF' not in max_dict or mem_free > max_dict['MF']):
+            max_dict['MF'] = mem_free
+        if ('MF' not in min_dict or mem_free < min_dict['MF']):
+            min_dict['MF'] = mem_free
+
+        if ('A' not in max_dict or anon > max_dict['A']):
+            max_dict['A'] = anon
+        if ('A' not in min_dict or anon < min_dict['A']):
+            min_dict['A'] = anon
+
+        if ('AcF' not in max_dict or active_file > max_dict['AcF']):
+            max_dict['AcF'] = active_file
+        if ('AcF' not in min_dict or active_file < min_dict['AcF']):
+            min_dict['AcF'] = active_file
+
+        if ('InF' not in max_dict or inactive_file > max_dict['InF']):
+            max_dict['InF'] = inactive_file
+        if ('InF' not in min_dict or inactive_file < min_dict['InF']):
+            min_dict['InF'] = inactive_file
+
+        if ('IsF' not in max_dict or isolated_file > max_dict['IsF']):
+            max_dict['IsF'] = isolated_file
+        if ('IsF' not in min_dict or isolated_file < min_dict['IsF']):
+            min_dict['IsF'] = isolated_file
+
+        if ('ReF' not in max_dict or re_file > max_dict['ReF']):
+            max_dict['ReF'] = re_file
+        if ('ReF' not in min_dict or re_file < min_dict['ReF']):
+            min_dict['ReF'] = re_file
+
+        if ('SF' not in max_dict or swap_free > max_dict['SF']):
+            max_dict['SF'] = swap_free
+        if ('SF' not in min_dict or swap_free < min_dict['SF']):
+            min_dict['SF'] = swap_free
+
+        if ('D' not in max_dict or dirty > max_dict['D']):
+            max_dict['D'] = dirty
+        if ('D' not in min_dict or dirty < min_dict['D']):
+            min_dict['D'] = dirty
+
+        if ('W' not in max_dict or writeback > max_dict['W']):
+            max_dict['W'] = writeback
+        if ('W' not in min_dict or writeback < min_dict['W']):
+            min_dict['W'] = writeback
+
+        if ('C' not in max_dict or clean > max_dict['C']):
+            max_dict['C'] = clean
+        if ('C' not in min_dict or clean < min_dict['C']):
+            min_dict['C'] = clean
+
+        # MA=8796=90% MF=8841 A=205 AcF=52.4 InF=108.8 IsF=0.0  ReF=161.2  \
+        #     D=0.2  W=0.0  C=161.0  SF=48595=99%
+
+        log('MA={}={}% MF={} A={} AcF={} InF={} IsF={}  ReF={}  D={}  '
+            'W={}  C={}  SF={}={}%'.format(
+                round(mem_available / 1024),
+                round(mem_available / mem_total * 100),
+                round(mem_free / 1024),
+                round(anon / 1024),
+                round(active_file / 1024, 1),
+                round(inactive_file / 1024, 1),
+                round(isolated_file / 1024, 1),
+                round(re_file / 1024, 1),
+                round(dirty / 1024, 1),
+                round(writeback / 1024, 1),
+                round(clean / 1024, 2),
+                round(swap_free / 1024),
+                round(swap_free / (swap_total + 1) * 100)
+            ))
+
+        sleep(interval)
