@@ -2,13 +2,13 @@
 
 Memory metrics (from `/proc/meminfo`) monitor and logger.
 
-mem2log has three modes: 1 (default), 2 (logs more metrics), 3 (special mode for patched kernels).
+`mem2log` has three modes: `1` (default), `2` (logs more metrics), `3` (special mode for patched kernels).
 
 Set the `--log LOG` option to log into the file. 
 
 Set the `-i INTERVAL` option to specify the interval.
 
-At the end (when catches SIGINT, SIGTERM, SIGHUP or SIGQUIT signal) mem2log prints peak (min and max) values.
+At the end (when catches `SIGINT`, `SIGTERM`, `SIGHUP` or `SIGQUIT` signal) `mem2log` prints peak (`min` and `max`) values.
 
 ## Usage
 
