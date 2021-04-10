@@ -10,7 +10,7 @@ Set the `-i INTERVAL` option to specify the interval.
 
 ## Usage
 
-Just run the script.
+Just run the script. Choose mode, interval and set path to the log file.
 ```
 $ ./mem2log -h
 usage: mem2log [-h] [-i INTERVAL] [-l LOG] [-m MODE]
@@ -24,6 +24,10 @@ optional arguments:
 ```
 
 Output examples:
+
+<details>
+ <summary>./mem2log</summary>
+
 ```
 $ ./mem2log
 Starting mem2log with interval 2s, mode: 1
@@ -53,9 +57,11 @@ Peak values:
   SF:  min 0.0, max 0.0
 Exit.
 ```
+</details>
 
 <details>
- <summary>`mem2log -m2`</summary>
+ <summary>./mem2log -m2</summary>
+
 ```
 $ ./mem2log -m2
 Starting mem2log with interval 2s, mode: 2
