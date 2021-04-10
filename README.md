@@ -100,6 +100,9 @@ Exit.
 ```
 </details>
 
+<details>
+ <summary>./mem2log -m3</summary>
+
 ```
 $ ./mem2log -m3
 Starting mem2log with interval 2s, mode: 3
@@ -131,8 +134,13 @@ Peak values:
   SF:  min 0.0, max 0.0
 Exit.
 ```
+</details>
 
 Log file example (started with cmd `mem2log -l /tmp/mem.log`):
+
+<details>
+ <summary>mem2log -l /tmp/mem.log</summary>
+
 ```
 2021-04-10 14:37:57,206: Starting mem2log with interval 2s, mode: 1
 2021-04-10 14:37:57,206: Log file: /tmp/mem.log
@@ -162,6 +170,7 @@ Log file example (started with cmd `mem2log -l /tmp/mem.log`):
 2021-04-10 14:38:03,748:   SF:  min 0.0, max 0.0
 2021-04-10 14:38:03,748: Exit.
 ```
+</details>
 
 ## mlockall()
 
