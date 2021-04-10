@@ -54,6 +54,8 @@ Peak values:
 Exit.
 ```
 
+<details>
+ <summary>`mem2log -m2`</summary>
 ```
 $ ./mem2log -m2
 Starting mem2log with interval 2s, mode: 2
@@ -90,6 +92,7 @@ Peak values:
   SR:  min 40.16, max 40.16
 Exit.
 ```
+</details>
 
 ```
 $ ./mem2log -m3
