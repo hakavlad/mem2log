@@ -1,4 +1,7 @@
+
 # mem2log
+
+[![Total alerts](https://img.shields.io/lgtm/alerts/g/hakavlad/mem2log.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/hakavlad/mem2log/alerts/)
 
 Memory metrics (from `/proc/meminfo`) monitor and logger.
 
