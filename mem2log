@@ -73,30 +73,36 @@ def check_meminfo2():
         mem_free = int(x[mem_free_index].split(':')[1])
         buffers = int(x[buffers_index].split(':')[1])
         cached = int(x[cached_index].split(':')[1])
+        swap_cached = int(x[swap_cached_index].split(':')[1])
         active_anon = int(x[active_anon_index].split(':')[1])
         inactive_anon = int(x[inactive_anon_index].split(':')[1])
         active_file = int(x[active_file_index].split(':')[1])
         inactive_file = int(x[inactive_file_index].split(':')[1])
+        mlocked = int(x[mlocked_index].split(':')[1])
         swap_total = int(x[swap_total_index].split(':')[1])
         swap_free = int(x[swap_free_index].split(':')[1])
         dirty = int(x[dirty_index].split(':')[1])
         writeback = int(x[writeback_index].split(':')[1])
         shmem = int(x[shmem_index].split(':')[1])
+        slab = int(x[slab_index].split(':')[1])
         sreclaimable = int(x[sreclaimable_index].split(':')[1])
     return (
         mem_available,
         mem_free,
         buffers,
         cached,
+        swap_cached,
         active_anon,
         inactive_anon,
         active_file,
         inactive_file,
+        mlocked,
         swap_total,
         swap_free,
         dirty,
         writeback,
         shmem,
+        slab,
         sreclaimable)
 
 
@@ -203,6 +209,10 @@ def signal_handler(signum, frame):
             round(min_dict['CA'] / K, 2),
             round(max_dict['CA'] / K, 2)))
 
+        log('  SC:  min {}, max {}'.format(
+            round(min_dict['SC'] / K, 2),
+            round(max_dict['SC'] / K, 2)))
+
         log('  AA:  min {}, max {}'.format(
             round(min_dict['AA'] / K, 2),
             round(max_dict['AA'] / K, 2)))
@@ -218,6 +228,10 @@ def signal_handler(signum, frame):
         log('  IF:  min {}, max {}'.format(
             round(min_dict['IF'] / K, 2),
             round(max_dict['IF'] / K, 2)))
+
+        log('  ML:  min {}, max {}'.format(
+            round(min_dict['ML'] / K, 2),
+            round(max_dict['ML'] / K, 2)))
 
         log('  SF:  min {}, max {}'.format(
             round(min_dict['SF'] / K, 2),
@@ -242,6 +256,10 @@ def signal_handler(signum, frame):
         log('  SH:  min {}, max {}'.format(
             round(min_dict['SH'] / K, 2),
             round(max_dict['SH'] / K, 2)))
+
+        log('  SL:  min {}, max {}'.format(
+            round(min_dict['SL'] / K, 2),
+            round(max_dict['SL'] / K, 2)))
 
         log('  SR:  min {}, max {}'.format(
             round(min_dict['SR'] / K, 2),
@@ -300,7 +318,6 @@ parser.add_argument(
     type=float
 )
 
-
 parser.add_argument(
     '-l',
     '--log',
@@ -309,7 +326,6 @@ parser.add_argument(
     type=str
 )
 
-
 parser.add_argument(
     '-m',
     '--mode',
@@ -317,7 +333,6 @@ parser.add_argument(
     default='1',
     type=str
 )
-
 
 args = parser.parse_args()
 interval = args.interval
@@ -372,18 +387,23 @@ mem_available_index = mem_list_names.index('MemAvailable')
 mem_free_index = mem_list_names.index('MemFree')
 buffers_index = mem_list_names.index('Buffers')
 cached_index = mem_list_names.index('Cached')
+swap_cached_index = mem_list_names.index('SwapCached')
 active_anon_index = mem_list_names.index('Active(anon)')
 inactive_anon_index = mem_list_names.index('Inactive(anon)')
 active_file_index = mem_list_names.index('Active(file)')
 inactive_file_index = mem_list_names.index('Inactive(file)')
+mlocked_index = mem_list_names.index('Mlocked')
 swap_total_index = mem_list_names.index('SwapTotal')
 swap_free_index = mem_list_names.index('SwapFree')
 dirty_index = mem_list_names.index('Dirty')
 writeback_index = mem_list_names.index('Writeback')
 shmem_index = mem_list_names.index('Shmem')
+slab_index = mem_list_names.index('Slab')
 sreclaimable_index = mem_list_names.index('SReclaimable')
+
 mem_total = int(mem_list[0].split(':')[1][:-4])
 swap_total = int(mem_list[swap_total_index].split(':')[1][:-4])
+
 
 if mode == '3':
     try:
@@ -519,19 +539,22 @@ if mode == '1':
 
 if mode == '2':
 
-    log('MA is MemAvailable, MF is MemFree, BU is Buffers, CA is Cached')
+    log('MA is MemAvailable, MF is MemFree, BU is Buffers, CA is Cached, '
+        'SC is SwapCached')
     log('AA is Active(anon), IA is Inactive(anon), AF is Active(file), '
         'IF is Inactive(file)')
-    log('SF is SwapFree, SU is `SwapTotal - SwapFree`, DI is Dirty, '
-        'WR is Writeback')
-    log('CF is Clean File (AF + IF - DI), SH is Shmem, SR is SReclaimable')
+    log('ML is Mlocked, SF is SwapFree, SU is `SwapTotal - SwapFree`, '
+        'DI is Dirty, WR is Writeback')
+    log('CF is Clean File (AF + IF - DI), SH is Shmem, SL is Slab, SR '
+        'is SReclaimable')
     log('--')
 
     while True:
 
-        (mem_available, mem_free, buffers, cached, active_anon, inactive_anon,
-         active_file, inactive_file, swap_total, swap_free, dirty, writeback,
-         shmem, sreclaimable) = check_meminfo2()
+        (mem_available, mem_free, buffers, cached, swap_cached, active_anon,
+         inactive_anon, active_file, inactive_file, mlocked, swap_total,
+         swap_free, dirty, writeback, shmem, slab, sreclaimable
+         ) = check_meminfo2()
 
         swap_used = swap_total - swap_free
         clean_file = max(0, (active_file + inactive_file - dirty))
@@ -556,6 +579,11 @@ if mode == '2':
         if ('CA' not in min_dict or cached < min_dict['CA']):
             min_dict['CA'] = cached
 
+        if ('SC' not in max_dict or swap_cached > max_dict['SC']):
+            max_dict['SC'] = swap_cached
+        if ('SC' not in min_dict or swap_cached < min_dict['SC']):
+            min_dict['SC'] = swap_cached
+
         if ('AA' not in max_dict or active_anon > max_dict['AA']):
             max_dict['AA'] = active_anon
         if ('AA' not in min_dict or active_anon < min_dict['AA']):
@@ -575,6 +603,11 @@ if mode == '2':
             max_dict['IF'] = inactive_file
         if ('IF' not in min_dict or inactive_file < min_dict['IF']):
             min_dict['IF'] = inactive_file
+
+        if ('ML' not in max_dict or mlocked > max_dict['ML']):
+            max_dict['ML'] = mlocked
+        if ('ML' not in min_dict or mlocked < min_dict['ML']):
+            min_dict['ML'] = mlocked
 
         if ('SF' not in max_dict or swap_free > max_dict['SF']):
             max_dict['SF'] = swap_free
@@ -606,30 +639,38 @@ if mode == '2':
         if ('SH' not in min_dict or shmem < min_dict['SH']):
             min_dict['SH'] = shmem
 
+        if ('SL' not in max_dict or slab > max_dict['SL']):
+            max_dict['SL'] = slab
+        if ('SL' not in min_dict or slab < min_dict['SL']):
+            min_dict['SL'] = slab
+
         if ('SR' not in max_dict or sreclaimable > max_dict['SR']):
             max_dict['SR'] = sreclaimable
         if ('SR' not in min_dict or sreclaimable < min_dict['SR']):
             min_dict['SR'] = sreclaimable
 
-        # MA=8806 MF=8853 BU=25 CA=229 AA=82 IA=112 AF=52 IF=106 SF=48584 \
-        #     SU=356 DI=0 WR=0 CF=158 SH=91 SR=36
+        # MA=7588 MF=7589 BU=16 CA=496 SC=2 AA=394 IA=723 AF=95 IF=144 ML=10 \
+        #     SF=38141 SU=992 DI=1 WR=0 CF=239 SH=267 SL=119 SR=45
 
-        log('MA={} MF={} BU={} CA={} AA={} IA={} AF={} IF={} SF={} '
-            'SU={} DI={} WR={} CF={} SH={} SR={}'.format(
+        log('MA={} MF={} BU={} CA={} SC={} AA={} IA={} AF={} IF={} ML={} '
+            'SF={} SU={} DI={} WR={} CF={} SH={} SL={} SR={}'.format(
                 round(mem_available / K),
                 round(mem_free / K),
                 round(buffers / K),
                 round(cached / K),
+                round(swap_cached / K),
                 round(active_anon / K),
                 round(inactive_anon / K),
                 round(active_file / K),
                 round(inactive_file / K),
+                round(mlocked / K),
                 round(swap_free / K),
                 round(swap_used / K),
                 round(dirty / K),
                 round(writeback / K),
                 round(clean_file / K),
                 round(shmem / K),
+                round(slab / K),
                 round(sreclaimable / K)
             ))
 
