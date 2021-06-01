@@ -17,7 +17,7 @@ At the end (when catches `SIGINT`, `SIGTERM`, `SIGHUP` or `SIGQUIT` signal) `mem
 
 Just run the script. 
 ```
-$ ./mem2log -h
+$ mem2log -h
 usage: mem2log [-h] [-i INTERVAL] [-l LOG] [-m MODE]
 
 optional arguments:
@@ -31,76 +31,81 @@ optional arguments:
 Output examples:
 
 <details>
- <summary>./mem2log</summary>
+ <summary>mem2log</summary>
 
 ```
-$ ./mem2log
+$ mem2log
 Starting mem2log with interval 2s, mode: 1
 Process memory locked with MCL_CURRENT | MCL_FUTURE | MCL_ONFAULT
 All values are in mebibytes
-MemTotal: 9788.1, SwapTotal: 0.0
+MemTotal: 9783.2, SwapTotal: 39132.9
 --
 MA is MemAvailable, MF is MemFree, A is Anon
 F is File, AF is Active(file), IF is Inactive(file)
-D is Dirty, C is Clean file (File - Dirty), SF is SwapFree
+D is Dirty, C is Clean file (File - Dirty)
+SF is SwapFree, SU is SwapUsed (SwapTotal - SwapFree)
 --
-MA=7899=81% MF=7622 A=1334 F=483 AF=249 IF=233 D=0 C=483 SF=0=0%
-MA=7897=81% MF=7621 A=1334 F=483 AF=249 IF=233 D=0 C=483 SF=0=0%
-MA=7897=81% MF=7620 A=1334 F=483 AF=249 IF=233 D=0 C=483 SF=0=0%
-MA=7897=81% MF=7621 A=1334 F=483 AF=249 IF=233 D=0 C=483 SF=0=0%
+MA=7448=76% MF=7351 A=1121 F=408 AF=219 IF=189 D=5 C=403 SF=38237 SU=896
+MA=7447=76% MF=7350 A=1121 F=408 AF=219 IF=189 D=5 C=403 SF=38237 SU=896
+MA=7448=76% MF=7351 A=1121 F=408 AF=219 IF=189 D=5 C=403 SF=38237 SU=896
+MA=7447=76% MF=7350 A=1121 F=408 AF=219 IF=189 D=5 C=403 SF=38237 SU=896
 ^C--
 Got the SIGINT signal
 Peak values:
-  MA:  min 7896.95, max 7898.69
-  MF:  min 7620.21, max 7621.77
-  A:   min 1333.88, max 1333.96
-  F:   min 482.62, max 482.8
-  AF:  min 249.19, max 249.35
-  IF:  min 233.43, max 233.46
-  D:   min 0.0, max 0.1
-  C:   min 482.61, max 482.71
-  SF:  min 0.0, max 0.0
+  MA:  min 7446.82, max 7447.94
+  MF:  min 7350.03, max 7351.02
+  A:   min 1121.0, max 1121.34
+  F:   min 408.05, max 408.15
+  AF:  min 219.29, max 219.33
+  IF:  min 188.76, max 188.82
+  D:   min 4.7, max 4.7
+  C:   min 403.35, max 403.45
+  SF:  min 38236.56, max 38236.56
+  SU:  min 896.33, max 896.33
 Exit.
 ```
 </details>
 
 <details>
- <summary>./mem2log -m2</summary>
+ <summary>mem2log -m 2</summary>
 
 ```
-$ ./mem2log -m2
+$ mem2log -m 2
 Starting mem2log with interval 2s, mode: 2
 Process memory locked with MCL_CURRENT | MCL_FUTURE | MCL_ONFAULT
 All values are in mebibytes
-MemTotal: 9788.1, SwapTotal: 0.0
+MemTotal: 9783.2, SwapTotal: 39132.9
 --
-MA is MemAvailable, MF is MemFree, BU is Buffers, CA is Cached
+MA is MemAvailable, MF is MemFree, BU is Buffers, CA is Cached, SC is SwapCached
 AA is Active(anon), IA is Inactive(anon), AF is Active(file), IF is Inactive(file)
-SF is SwapFree, SU is `SwapTotal - SwapFree`, DI is Dirty, WR is Writeback
-CF is Clean File (AF + IF - DI), SH is Shmem, SR is SReclaimable
+ML is Mlocked, SF is SwapFree, SU is `SwapTotal - SwapFree`, DI is Dirty, WR is Writeback
+CF is Clean File (AF + IF - DI), SH is Shmem, SL is Slab, SR is SReclaimable
 --
-MA=7899 MF=7622 BU=76 CA=650 AA=3 IA=1330 AF=249 IF=233 SF=0 SU=0 DI=0 WR=0 CF=483 SH=238 SR=40
-MA=7899 MF=7622 BU=76 CA=650 AA=3 IA=1330 AF=249 IF=233 SF=0 SU=0 DI=0 WR=0 CF=483 SH=238 SR=40
-MA=7900 MF=7623 BU=76 CA=650 AA=3 IA=1330 AF=249 IF=233 SF=0 SU=0 DI=0 WR=0 CF=483 SH=237 SR=40
-MA=7900 MF=7623 BU=76 CA=650 AA=3 IA=1330 AF=249 IF=233 SF=0 SU=0 DI=0 WR=0 CF=483 SH=237 SR=40
+MA=7430 MF=7333 BU=67 CA=642 SC=4 AA=151 IA=985 AF=222 IF=186 ML=11 SF=38238 SU=895 DI=1 WR=0 CF=408 SH=294 SL=138 SR=60
+MA=7429 MF=7332 BU=67 CA=642 SC=4 AA=151 IA=985 AF=222 IF=186 ML=11 SF=38238 SU=895 DI=1 WR=0 CF=408 SH=295 SL=138 SR=60
+MA=7429 MF=7332 BU=67 CA=641 SC=4 AA=151 IA=985 AF=222 IF=186 ML=11 SF=38238 SU=895 DI=1 WR=0 CF=408 SH=294 SL=138 SR=60
+MA=7430 MF=7333 BU=67 CA=641 SC=4 AA=151 IA=985 AF=222 IF=186 ML=11 SF=38238 SU=895 DI=1 WR=0 CF=408 SH=294 SL=138 SR=60
 ^C--
 Got the SIGINT signal
 Peak values:
-  MA:  min 7899.06, max 7900.0
-  MF:  min 7622.3, max 7623.24
-  BU:  min 76.23, max 76.24
-  CA:  min 649.58, max 650.23
-  AA:  min 2.91, max 2.91
-  IA:  min 1330.34, max 1330.44
-  AF:  min 249.2, max 249.38
-  IF:  min 233.45, max 233.46
-  SF:  min 0.0, max 0.0
-  SU:  min 0.0, max 0.0
-  DI:  min 0.0, max 0.0
+  MA:  min 7429.33, max 7430.14
+  MF:  min 7332.27, max 7332.99
+  BU:  min 66.97, max 66.97
+  CA:  min 641.34, max 642.21
+  SC:  min 3.72, max 3.72
+  AA:  min 150.69, max 150.88
+  IA:  min 984.83, max 984.88
+  AF:  min 221.85, max 221.93
+  IF:  min 186.49, max 186.5
+  ML:  min 10.52, max 10.69
+  SF:  min 38238.31, max 38238.31
+  SU:  min 894.58, max 894.58
+  DI:  min 0.74, max 0.74
   WR:  min 0.0, max 0.0
-  CF:  min 482.64, max 482.84
-  SH:  min 237.41, max 238.07
-  SR:  min 40.16, max 40.16
+  CF:  min 407.6, max 407.69
+  SH:  min 294.32, max 295.18
+  SL:  min 137.93, max 138.04
+  SR:  min 59.53, max 59.53
 Exit.
 ```
 </details>
@@ -109,7 +114,7 @@ Exit.
  <summary>./mem2log -m3</summary>
 
 ```
-$ ./mem2log -m3
+$ mem2log -m 3
 Starting mem2log with interval 2s, mode: 3
 Process memory locked with MCL_CURRENT | MCL_FUTURE | MCL_ONFAULT
 All values are in mebibytes
@@ -147,33 +152,35 @@ Log file example (started with cmd `mem2log -l /tmp/mem.log`):
  <summary>mem2log -l /tmp/mem.log</summary>
 
 ```
-2021-04-10 14:37:57,206: Starting mem2log with interval 2s, mode: 1
-2021-04-10 14:37:57,206: Log file: /tmp/mem.log
-2021-04-10 14:37:57,207: Process memory locked with MCL_CURRENT | MCL_FUTURE | MCL_ONFAULT
-2021-04-10 14:37:57,207: All values are in mebibytes
-2021-04-10 14:37:57,208: MemTotal: 9788.1, SwapTotal: 0.0
-2021-04-10 14:37:57,208: --
-2021-04-10 14:37:57,208: MA is MemAvailable, MF is MemFree, A is Anon
-2021-04-10 14:37:57,208: F is File, AF is Active(file), IF is Inactive(file)
-2021-04-10 14:37:57,208: D is Dirty, C is Clean file (File - Dirty), SF is SwapFree
-2021-04-10 14:37:57,208: --
-2021-04-10 14:37:57,208: MA=7933=81% MF=7649 A=1285 F=490 AF=251 IF=239 D=0 C=490 SF=0=0%
-2021-04-10 14:37:59,211: MA=7934=81% MF=7649 A=1284 F=490 AF=251 IF=239 D=0 C=490 SF=0=0%
-2021-04-10 14:38:01,212: MA=7934=81% MF=7650 A=1284 F=490 AF=251 IF=239 D=0 C=490 SF=0=0%
-2021-04-10 14:38:03,215: MA=7934=81% MF=7649 A=1284 F=490 AF=251 IF=239 D=0 C=490 SF=0=0%
-2021-04-10 14:38:03,747: --
-2021-04-10 14:38:03,747: Got the SIGINT signal
-2021-04-10 14:38:03,747: Peak values:
-2021-04-10 14:38:03,747:   MA:  min 7933.15, max 7934.48
-2021-04-10 14:38:03,747:   MF:  min 7648.88, max 7650.3
-2021-04-10 14:38:03,747:   A:   min 1284.44, max 1284.55
-2021-04-10 14:38:03,747:   F:   min 489.86, max 489.96
-2021-04-10 14:38:03,748:   AF:  min 250.66, max 250.84
-2021-04-10 14:38:03,748:   IF:  min 239.12, max 239.19
-2021-04-10 14:38:03,748:   D:   min 0.0, max 0.0
-2021-04-10 14:38:03,748:   C:   min 489.86, max 489.96
-2021-04-10 14:38:03,748:   SF:  min 0.0, max 0.0
-2021-04-10 14:38:03,748: Exit.
+2021-06-02 01:00:25,844: Starting mem2log with interval 2s, mode: 1
+2021-06-02 01:00:25,844: Log file: /tmp/mem.log
+2021-06-02 01:00:25,845: Process memory locked with MCL_CURRENT | MCL_FUTURE | MCL_ONFAULT
+2021-06-02 01:00:25,845: All values are in mebibytes
+2021-06-02 01:00:25,845: MemTotal: 9783.2, SwapTotal: 39132.9
+2021-06-02 01:00:25,845: --
+2021-06-02 01:00:25,845: MA is MemAvailable, MF is MemFree, A is Anon
+2021-06-02 01:00:25,845: F is File, AF is Active(file), IF is Inactive(file)
+2021-06-02 01:00:25,845: D is Dirty, C is Clean file (File - Dirty)
+2021-06-02 01:00:25,846: SF is SwapFree, SU is SwapUsed (SwapTotal - SwapFree)
+2021-06-02 01:00:25,846: --
+2021-06-02 01:00:25,846: MA=7431=76% MF=7333 A=1139 F=409 AF=222 IF=187 D=0 C=409 SF=38240 SU=893
+2021-06-02 01:00:27,848: MA=7430=76% MF=7331 A=1139 F=409 AF=222 IF=187 D=0 C=409 SF=38240 SU=893
+2021-06-02 01:00:29,851: MA=7425=76% MF=7327 A=1144 F=409 AF=222 IF=187 D=0 C=409 SF=38240 SU=893
+2021-06-02 01:00:31,851: MA=7424=76% MF=7326 A=1144 F=409 AF=222 IF=187 D=0 C=409 SF=38240 SU=893
+2021-06-02 01:00:32,393: --
+2021-06-02 01:00:32,394: Got the SIGINT signal
+2021-06-02 01:00:32,394: Peak values:
+2021-06-02 01:00:32,394:   MA:  min 7424.3, max 7431.09
+2021-06-02 01:00:32,394:   MF:  min 7326.14, max 7332.97
+2021-06-02 01:00:32,394:   A:   min 1138.64, max 1144.34
+2021-06-02 01:00:32,394:   F:   min 409.38, max 409.42
+2021-06-02 01:00:32,394:   AF:  min 222.22, max 222.3
+2021-06-02 01:00:32,394:   IF:  min 187.08, max 187.2
+2021-06-02 01:00:32,394:   D:   min 0.03, max 0.04
+2021-06-02 01:00:32,394:   C:   min 409.35, max 409.38
+2021-06-02 01:00:32,395:   SF:  min 38239.56, max 38239.56
+2021-06-02 01:00:32,395:   SU:  min 893.33, max 893.33
+2021-06-02 01:00:32,395: Exit.
 ```
 </details>
 
