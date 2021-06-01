@@ -111,7 +111,7 @@ Exit.
 </details>
 
 <details>
- <summary>./mem2log -m3</summary>
+ <summary>mem2log -m 3</summary>
 
 ```
 $ mem2log -m 3
@@ -186,7 +186,7 @@ Log file example (started with cmd `mem2log -l /tmp/mem.log`):
 
 ## mlockall()
 
-`mem2log` calls `mlockall()` to work well under low-memory conditions. That's why running it with `sudo` is a good idea.
+`mem2log` calls `mlockall()` to work well under low-memory conditions. That's why running it with `sudo` is a good idea (to get `CAP_IPC_LOCK` capability).
 
 ## Requirements
 
